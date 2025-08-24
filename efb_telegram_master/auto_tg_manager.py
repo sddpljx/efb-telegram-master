@@ -42,10 +42,43 @@ class AutoTGManager(LocaleMixin):
         if self.tg_config.get('auto_manage_tg') and \
                 self.tg_config.get('tg_api_id') and \
                 self.tg_config.get('tg_api_hash'):
-            self.tg_client = pyrogram.Client(name='efb_telegram_auto_create_group_client',
-                                             api_id=self.tg_config.get('tg_api_id'),
-                                             api_hash=self.tg_config.get('tg_api_hash'),
-                                             workdir=ehforwarderbot.utils.get_data_path(channel.channel_id))
+            # 构建 Pyrogram 客户端参数
+            client_params = {
+                'name': 'efb_telegram_auto_create_group_client',
+                'api_id': self.tg_config.get('tg_api_id'),
+                'api_hash': self.tg_config.get('tg_api_hash'),
+                'workdir': ehforwarderbot.utils.get_data_path(channel.channel_id)
+            }
+            
+            # 添加代理支持
+            proxy_config = self.tg_config.get('pyrogram_proxy')
+            if proxy_config:
+                proxy_type = proxy_config.get('type', '').lower()
+                if proxy_type == 'http':
+                    client_params['proxy'] = {
+                        'scheme': 'http',
+                        'hostname': proxy_config.get('hostname'),
+                        'port': proxy_config.get('port'),
+                        'username': proxy_config.get('username'),
+                        'password': proxy_config.get('password')
+                    }
+                elif proxy_type == 'socks5':
+                    client_params['proxy'] = {
+                        'scheme': 'socks5',
+                        'hostname': proxy_config.get('hostname'),
+                        'port': proxy_config.get('port'),
+                        'username': proxy_config.get('username'),
+                        'password': proxy_config.get('password')
+                    }
+                    
+            # 从字典中移除 None 值
+            if 'proxy' in client_params and client_params['proxy']:
+                client_params['proxy'] = {k: v for k, v in client_params['proxy'].items() if v is not None}
+                if not client_params['proxy'].get('hostname') or not client_params['proxy'].get('port'):
+                    self.logger.warning("Pyrogram proxy configuration incomplete, proxy disabled.")
+                    client_params.pop('proxy')
+                    
+            self.tg_client = pyrogram.Client(**client_params)
             self.tg_loop = asyncio.new_event_loop()
             #self.tg_loop.run_until_complete(self._start_tg_client_if_needed())
 

@@ -646,6 +646,14 @@ Config Example:
         mq_auto_link_group_id: '-xxxxxxxx'
         # bot_name, in my case, it doesn't work when use bot id to create a group, so add a new configuration here is one choice
         bot_name: '@bot_name'
+        # Pyrogram proxy configuration for auto group creation
+        pyrogram_proxy:
+          type: socks5  # or http
+          hostname: 127.0.0.1
+          port: 1080
+          # Optional authentication
+          username: proxy_user
+          password: proxy_pass
 
 Network configuration: timeout tweaks
 -------------------------------------
